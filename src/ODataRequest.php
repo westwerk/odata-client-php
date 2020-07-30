@@ -2,7 +2,6 @@
 
 namespace SaintSystems\OData;
 
-use GuzzleHttp\Client;
 use SaintSystems\OData\Exception\ODataException;
 
 /**
@@ -16,13 +15,6 @@ class ODataRequest implements IODataRequest
      * @var string
      */
     protected $requestUrl;
-
-    /**
-     * The Guzzle client used to make the HTTP request
-     *
-     * @var Client
-     */
-    protected $http;
 
     /**
      * An array of headers to send with the request
@@ -61,13 +53,6 @@ class ODataRequest implements IODataRequest
     protected $returnType;
 
     /**
-     * The timeout, in seconds
-     *
-     * @var string
-     */
-    protected $timeout;
-
-    /**
      * @var IODataClient
      */
     private $client;
@@ -95,7 +80,6 @@ class ODataRequest implements IODataRequest
         if (empty($this->requestUrl)) {
             throw new ODataException(Constants::REQUEST_URL_MISSING);
         }
-        $this->timeout = 0;
         $this->headers = $this->getDefaultHeaders();
     }
 
@@ -182,19 +166,6 @@ class ODataRequest implements IODataRequest
     }
 
     /**
-     * Sets the timeout limit of the HTTP request
-     *
-     * @param string $timeout The timeout in ms
-     *
-     * @return ODataRequest object
-     */
-    public function setTimeout($timeout)
-    {
-        $this->timeout = $timeout;
-        return $this;
-    }
-
-    /**
      * Executes the HTTP request using Guzzle
      *
      * @throws ODataException if response is invalid
@@ -249,54 +220,6 @@ class ODataRequest implements IODataRequest
     }
 
     /**
-     * Executes the HTTP request asynchronously using Guzzle
-     *
-     * @param mixed $client The Http client to use in the request
-     *
-     * @return mixed object or array of objects
-     *         of class $returnType
-     */
-    public function executeAsync($client = null)
-    {
-        if (is_null($client)) {
-            $client = $this->createHttpClient();
-        }
-
-        $promise = $client->requestAsync(
-            $this->requestType,
-            $this->getRequestUrl(),
-            [
-                'body' => $this->requestBody,
-                'stream' => $this->returnsStream,
-                'timeout' => $this->timeout
-            ]
-        )->then(
-            // On success, return the result/response
-            function ($result) {
-                $response = new ODataResponse(
-                    $this,
-                    $result->getBody()->getContents(),
-                    $result->getStatusCode(),
-                    $result->getHeaders()
-                );
-                $returnObject = $response;
-                if ($this->returnType) {
-                    $returnObject = $response->getResponseAsObject(
-                        $this->returnType
-                    );
-                }
-                return $returnObject;
-            },
-            // On fail, log the error and return null
-            function ($reason) {
-                trigger_error("Async call failed: " . $reason->getMessage());
-                return null;
-            }
-        );
-        return $promise;
-    }
-
-    /**
      * Get a list of headers for the request
      *
      * @return array The headers for the request
@@ -308,7 +231,7 @@ class ODataRequest implements IODataRequest
             RequestHeader::CONTENT_TYPE => 'application/json',
             RequestHeader::ODATA_MAX_VERSION => Constants::MAX_ODATA_VERSION,
             RequestHeader::ODATA_VERSION => Constants::ODATA_VERSION,
-            RequestHeader::PREFER => Constants::ODATA_MAX_PAGE_SIZE_DEFAULT,
+            RequestHeader::PREFER => Preference::RETURN_REPRESENTATION,
             RequestHeader::USER_AGENT => 'odata-sdk-php-' . Constants::SDK_VERSION,
             //RequestHeader::AUTHORIZATION => 'Bearer ' . $this->accessToken
         ];
@@ -331,7 +254,7 @@ class ODataRequest implements IODataRequest
 
     /**
      * Adds all of the headers from the header collection to the request.
-     * @param \SaintSystems\OData\HttpRequestMessage $request The HttpRequestMessage representation of the request.
+     * @param HttpRequestMessage $request The HttpRequestMessage representation of the request.
      */
     private function addHeadersToRequest(HttpRequestMessage $request)
     {
@@ -348,8 +271,8 @@ class ODataRequest implements IODataRequest
     private function authenticateRequest(HttpRequestMessage $request)
     {
         $authenticationProvider = $this->client->getAuthenticationProvider();
-        if ( ! is_null($authenticationProvider) && is_callable($authenticationProvider)) {
-            return $authenticationProvider($request);
+        if ( ! is_null($authenticationProvider)) {
+            return $authenticationProvider->authenticateRequest($request);
         }
     }
 

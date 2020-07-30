@@ -2,6 +2,7 @@
 
 namespace SaintSystems\OData;
 
+use SaintSystems\OData\Query\Builder;
 use SaintSystems\OData\Query\IGrammar;
 use SaintSystems\OData\Query\IProcessor;
 
@@ -9,7 +10,7 @@ interface IODataClient
 {
     /**
      * Gets the IAuthenticationProvider for authenticating HTTP requests.
-     * @var \SaintSystems\OData\IAuthenticationProvider
+     * @var IAuthenticationProvider
      */
     public function getAuthenticationProvider();
 
@@ -30,7 +31,7 @@ interface IODataClient
      *
      * @param string $entitySet
      *
-     * @return \SaintSystems\OData\Query\Builder
+     * @return Builder
      */
     public function from($entitySet);
 
@@ -39,14 +40,14 @@ interface IODataClient
      *
      * @param array $properties
      *
-     * @return \SaintSystems\OData\Query\Builder
+     * @return Builder
      */
     public function select($properties = []);
 
     /**
      * Get a new query builder instance.
      *
-     * @return \SaintSystems\OData\Query\Builder
+     * @return Builder
      */
     public function query();
 
@@ -54,10 +55,32 @@ interface IODataClient
      * @param $requestUri
      * @param array $bindings
      *
-     * @return IODataRequest
+     * @return mixed
      */
     public function get($requestUri, $bindings = []);
 
+    /**
+     * @param string $requestUri
+     * @param mixed  $postData
+     *
+     * @return mixed
+     */
+    public function post($requestUri, $postData);
+
+    /**
+     * @param string $requestUri
+     * @param mixed  $body
+     *
+     * @return mixed
+     */
+    public function patch($requestUri, $body);
+
+    /**
+     * @param string $requestUri
+     *
+     * @return mixed
+     */
+    public function delete($requestUri);
     /**
      * Get the query grammar used by the connection.
      *

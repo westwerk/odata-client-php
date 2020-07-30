@@ -33,7 +33,7 @@ class Constants
     // Default ODATA Paging
     const ODATA_MAX_PAGE_SIZE = 'odata.maxpagesize';
     const ODATA_MAX_PAGE_SIZE_DEFAULT = 25;
-
+    
     // Define error constants
     const MAX_PAGE_SIZE = 999;
     const MAX_PAGE_SIZE_ERROR = 'Page size must be less than ' . self::MAX_PAGE_SIZE;
@@ -50,4 +50,5 @@ class Constants
 
     // Define server error constants
     const UNABLE_TO_PARSE_RESPONSE = 'The HTTP client sent back an invalid response';
+    
 }

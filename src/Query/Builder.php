@@ -3,8 +3,6 @@
 namespace SaintSystems\OData\Query;
 
 use Closure;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use SaintSystems\OData\Constants;
 use SaintSystems\OData\Exception\ODataQueryException;
 use SaintSystems\OData\IODataClient;
@@ -763,7 +761,7 @@ class Builder
      * @param array $properties
      * @param array $options
      *
-     * @return Collection
+     * @return array
      */
     public function get($properties = [], $options = null)
     {
@@ -790,8 +788,7 @@ class Builder
 
         $this->properties = $original;
 
-        return collect($results);
-        //return $results;
+        return $results;
     }
 
     /**
@@ -801,7 +798,7 @@ class Builder
      * @param array $properties
      * @param array $options
      *
-     * @return Collection
+     * @return array
      */
     public function post($body = [], $properties = [], $options = null)
     {
@@ -828,7 +825,7 @@ class Builder
 
         $this->properties = $original;
 
-        return collect($results);
+        return $results;
     }
 
     /**
@@ -849,7 +846,7 @@ class Builder
      * @param array $properties
      * @param array $options
      *
-     * @return Collection
+     * @return array
      */
     public function patch($body, $properties = [], $options = null)
     {
@@ -876,8 +873,7 @@ class Builder
 
         $this->properties = $original;
 
-        return collect($results);
-        //return $results;
+        return $results;
     }
 
     /**
@@ -949,7 +945,7 @@ class Builder
      *
      * @param array $values
      *
-     * @return bool
+     * @return mixed
      */
     public function insert(array $values)
     {
@@ -980,7 +976,7 @@ class Builder
         // the query so they are all in one huge, flattened array for execution.
         return $this->client->post(
             $this->grammar->compileInsert($this, $values),
-            $this->cleanBindings(Arr::flatten($values, 1))
+            $this->cleanBindings(array_flatten($values, 1))
         );
     }
 
@@ -1015,7 +1011,7 @@ class Builder
      */
     public function getBindings()
     {
-        return Arr::flatten($this->bindings);
+        return array_flatten($this->bindings);
     }
 
     /**

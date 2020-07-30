@@ -15,16 +15,16 @@ namespace SaintSystems\OData;
 
 // use Closure;
 // use Exception;
-use ArrayAccess;
-use Carbon\CarbonInterface;
+
 // use LogicException;
 // use JsonSerializable;
+
+
+use ArrayAccess;
+use DateTime;
 use DateTimeInterface;
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Date;
 use SaintSystems\OData\Exception\MassAssignmentException;
+use function array_get;
 
 /**
 * Entity class
@@ -343,7 +343,7 @@ class Entity implements ArrayAccess, Arrayable
             return $this->entity;
         }
 
-        return str_replace('\\', '', Str::snake(Str::plural(class_basename($this))));
+        return str_replace('\\', '', str_snake(str_plural(class_basename($this))));
     }
 
     /**
@@ -560,7 +560,7 @@ class Entity implements ArrayAccess, Arrayable
     public static function cacheMutatedProperties($class)
     {
         static::$mutatorCache[$class] = collect(static::getMutatorMethods($class))->map(function ($match) {
-            return lcfirst(static::$snakePropreties ? Str::snake($match) : $match);
+            return lcfirst(static::$snakePropreties ? str_snake($match) : $match);
         })->all();
     }
 
@@ -698,7 +698,7 @@ class Entity implements ArrayAccess, Arrayable
             return false;
         }
 
-        return empty($this->getFillable()) && ! Str::startsWith($key, '_');
+        return empty($this->getFillable()) && ! str_startsWith($key, '_');
     }
 
     /**
@@ -759,7 +759,7 @@ class Entity implements ArrayAccess, Arrayable
      */
     public function getOriginal($key = null, $default = null)
     {
-        return Arr::get($this->original, $key, $default);
+        return array_get($this->original, $key, $default);
     }
 
     /**
@@ -1002,7 +1002,7 @@ class Entity implements ArrayAccess, Arrayable
         // which simply lets the developers tweak the property as it is set on
         // the entity, such as "json_encoding" a listing of data for storage.
         if ($this->hasSetMutator($key)) {
-            $method = 'set'.Str::studly($key).'Property';
+            $method = 'set'.str_studly($key).'Property';
 
             return $this->{$method}($value);
         }
@@ -1021,7 +1021,7 @@ class Entity implements ArrayAccess, Arrayable
         // If this attribute contains a JSON ->, we'll set the proper value in the
         // attribute's underlying array. This takes care of properly nesting an
         // attribute in the array's value in the case of deeply nested items.
-        if (Str::contains($key, '->')) {
+        if (str_contains($key, '->')) {
             return $this->fillJsonAttribute($key, $value);
         }
 
@@ -1038,7 +1038,7 @@ class Entity implements ArrayAccess, Arrayable
      */
     public function hasSetMutator($key)
     {
-        return method_exists($this, 'set'.Str::studly($key).'Property');
+        return method_exists($this, 'set'. str_studly($key).'Property');
     }
 
     /**
@@ -1058,7 +1058,7 @@ class Entity implements ArrayAccess, Arrayable
      * Return a timestamp as DateTime object with time set to 00:00:00.
      *
      * @param  mixed  $value
-     * @return \Illuminate\Support\Carbon
+     * @return DateTimeInterface
      */
     protected function asDate($value)
     {
@@ -1069,35 +1069,27 @@ class Entity implements ArrayAccess, Arrayable
      * Return a timestamp as DateTime object.
      *
      * @param  mixed  $value
-     * @return \Illuminate\Support\Carbon
+     * @return DateTimeInterface
      */
     protected function asDateTime($value)
     {
-        // If this value is already a Carbon instance, we shall just return it as is.
-        // This prevents us having to re-instantiate a Carbon instance when we know
-        // it already is one, which wouldn't be fulfilled by the DateTime check.
-        if ($value instanceof CarbonInterface) {
-            return Date::instance($value);
-        }
         // If the value is already a DateTime instance, we will just skip the rest of
         // these checks since they will be a waste of time, and hinder performance
         // when checking the field. We will just return the DateTime right away.
         if ($value instanceof DateTimeInterface) {
-            return Date::parse(
-                $value->format('Y-m-d H:i:s.u'), $value->getTimezone()
-            );
+            return $value;
         }
         // If this value is an integer, we will assume it is a UNIX timestamp's value
-        // and format a Carbon object from this timestamp. This allows flexibility
+        // and format a DateTime object from this timestamp. This allows flexibility
         // when defining your date fields as they might be UNIX timestamps here.
         if (is_numeric($value)) {
-            return Date::createFromTimestamp($value);
+            return (new DateTime())->setTimestamp($value);
         }
         // If the value is in simply year, month, day format, we will instantiate the
-        // Carbon instances from that format. Again, this provides for simple date
-        // fields on the database, while still supporting Carbonized conversion.
+        // DateTime instances from that format. Again, this provides for simple date
+        // fields on the database, while still supporting DateTime conversion.
         if ($this->isStandardDateFormat($value)) {
-            return Date::instance(Carbon::createFromFormat('Y-m-d', $value)->startOfDay());
+            return DateTime::createFromFormat('Y-m-d', $value)->setTime(0, 0, 0);
         }
         $format = $this->getDateFormat();
         // https://bugs.php.net/bug.php?id=75577
@@ -1105,9 +1097,9 @@ class Entity implements ArrayAccess, Arrayable
             $format = str_replace('.v', '.u', $format);
         }
         // Finally, we will just assume this date is in the format used by default on
-        // the database connection and use that format to create the Carbon object
+        // the database connection and use that format to create the DateTime object
         // that is returned back out to the developers after we convert it here.
-        return Date::createFromFormat($format, $value);
+        return DateTime::createFromFormat($format, $value);
     }
 
     /**
@@ -1273,7 +1265,7 @@ class Entity implements ArrayAccess, Arrayable
     public function propertiesToArray()
     {
         // If a property is a date, we will cast it to a string after converting it
-        // to a DateTime / Carbon instance. This is so we will get some consistent
+        // to a DateTime instance. This is so we will get some consistent
         // formatting while accessing properties vs. arraying / JSONing a model.
         $properties = $this->addDatePropertiesToArray(
             $properties = $this->getArrayableProperties()
@@ -1438,7 +1430,7 @@ class Entity implements ArrayAccess, Arrayable
             // key so that the relation property is snake cased in this returned
             // array to the developers, making this consistent with properties.
             // if (static::$snakeproperties) {
-            //     $key = Str::snake($key);
+            //     $key = str_snake($key);
             // }
 
             // If the relation value has been set, we will set it on this properties
@@ -1574,7 +1566,7 @@ class Entity implements ArrayAccess, Arrayable
      */
     public function hasGetMutator($key)
     {
-        return method_exists($this, 'get'.Str::studly($key).'Property');
+        return method_exists($this, 'get'. str_studly($key).'Property');
         //return method_exists($this, 'get_'.$key);
     }
 
@@ -1587,7 +1579,7 @@ class Entity implements ArrayAccess, Arrayable
      */
     protected function mutateProperty($key, $value)
     {
-        return $this->{'get'.Str::studly($key).'Property'}($value);
+        return $this->{'get'. str_studly($key).'Property'}($value);
         // return $this->{'get_'.$key}($value);
     }
 

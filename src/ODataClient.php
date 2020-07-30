@@ -59,7 +59,7 @@ class ODataClient implements IODataClient
      */
     public function __construct(
         $baseUrl,
-        Callable $authenticationProvider = null,
+        IAuthenticationProvider $authenticationProvider = null,
         IHttpProvider $httpProvider = null
     ) {
         $this->setBaseUrl($baseUrl);
@@ -118,7 +118,7 @@ class ODataClient implements IODataClient
      * Gets the IAuthenticationProvider for authenticating requests.
      * @var IAuthenticationProvider
      *
-     * @return Closure|IAuthenticationProvider
+     * @return ?IAuthenticationProvider
      */
     public function getAuthenticationProvider()
     {
@@ -204,7 +204,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param array  $bindings
      *
-     * @return IODataRequest
+     * @return mixed
      */
     public function get($requestUri, $bindings = [])
     {
@@ -217,7 +217,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param mixed  $postData
      *
-     * @return IODataRequest
+     * @return mixed
      */
     public function post($requestUri, $postData)
     {
@@ -230,7 +230,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param mixed  $body
      *
-     * @return IODataRequest
+     * @return mixed
      */
     public function patch($requestUri, $body)
     {
@@ -242,7 +242,7 @@ class ODataClient implements IODataClient
      *
      * @param string $requestUri
      *
-     * @return IODataRequest
+     * @return mixed
      */
     public function delete($requestUri)
     {
@@ -256,7 +256,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param mixed  $body
      *
-     * @return IODataRequest
+     * @return mixed
      *
      * @throws ODataException
      */

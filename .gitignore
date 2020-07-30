@@ -9,3 +9,6 @@ composer.lock
 Thumbs.db
 /tests/testConfig.json
 .vscode
+/nbproject/private/
+/.project
+/nbproject/

@@ -55,13 +55,6 @@ class Grammar implements IGrammar
     ];
 
     /**
-     * Determine if query param is the first one added to uri
-     *
-     * @var bool
-     */
-    private $isFirstQueryParam = true;
-
-    /**
      * @inheritdoc
      */
     public function compileSelect(Builder $query)

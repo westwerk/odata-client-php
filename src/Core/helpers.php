@@ -179,3 +179,221 @@ if (!function_exists('is_uuid')) {
         return preg_match('/[a-f0-9]{8}\-[a-f0-9]{4}\-[a-f0-9]{4}\-(8|9|a|b)[a-f0-9]{3}\-[a-f0-9]{12}/i', $uuid) == 1;
     }
 }
+if (! function_exists('value')) {
+    /**
+     * Return the default value of the given value.
+     *
+     * @param  mixed  $value
+     * @return mixed
+     */
+    function value($value)
+    {
+        return $value instanceof Closure ? $value() : $value;
+    }
+}
+
+if (!function_exists('array_accessible')) {
+    /**
+     * Determine whether the given value is array accessible.
+     *
+     * @param  mixed  $value
+     * @return bool
+     */
+    function array_accessible($value)
+    {
+        return is_array($value) || $value instanceof ArrayAccess;
+    }
+}
+
+if (!function_exists('array_exists')) {
+    /**
+     * Determine if the given key exists in the provided array.
+     *
+     * @param  \ArrayAccess|array  $array
+     * @param  string|int  $key
+     * @return bool
+     */
+    function array_exists($array, $key)
+    {
+        if ($array instanceof ArrayAccess) {
+            return $array->offsetExists($key);
+        }
+
+        return array_key_exists($key, $array);
+    }
+}
+
+if (!function_exists('array_flatten')) {
+        /**
+     * Flatten a multi-dimensional array into a single level.
+     *
+     * @param  iterable  $array
+     * @param  int  $depth
+     * @return array
+     */
+    function array_flatten($array, $depth = INF)
+    {
+        $result = [];
+
+        foreach ($array as $item) {
+            if (! is_array($item)) {
+                $result[] = $item;
+            } else {
+                $values = $depth === 1
+                    ? array_values($item)
+                    : array_flatten($item, $depth - 1);
+
+                foreach ($values as $value) {
+                    $result[] = $value;
+                }
+            }
+        }
+
+        return $result;
+    }
+}
+
+if (!function_exists('array_get')) {
+    /**
+     * Get an item from an array using "dot" notation.
+     *
+     * @param  ArrayAccess|array  $array
+     * @param  string|int|null  $key
+     * @param  mixed  $default
+     * @return mixed
+     */
+    function array_get($array, $key, $default = null)
+    {
+        if (! array_accessible($array)) {
+            return value($default);
+        }
+
+        if (is_null($key)) {
+            return $array;
+        }
+
+        if (array_exists($array, $key)) {
+            return $array[$key];
+        }
+
+        if (strpos($key, '.') === false) {
+            return $array[$key] ?? value($default);
+        }
+
+        foreach (explode('.', $key) as $segment) {
+            if (array_accessible($array) && array_exists($array, $segment)) {
+                $array = $array[$segment];
+            } else {
+                return value($default);
+            }
+        }
+
+        return $array;
+    }
+}
+
+if (!function_exists('str_lower')) {
+        /**
+     * Convert the given string to lower-case.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    function str_lower($value)
+    {
+        return mb_strtolower($value, 'UTF-8');
+    }
+}
+
+if (!function_exists('str_snake')) {
+    /**
+     * Convert a string to snake case.
+     *
+     * @param  string  $value
+     * @param  string  $delimiter
+     * @return string
+     */
+    function str_snake($value, $delimiter = '_')
+    {
+        $key = $value;
+
+        if (! ctype_lower($value)) {
+            $value = preg_replace('/\s+/u', '', ucwords($value));
+
+            $value = str_lower(preg_replace('/(.)(?=[A-Z])/u', '$1'.$delimiter, $value));
+        }
+
+        return $value;
+    }
+}
+
+if (!function_exists('str_startsWith')) {
+        /**
+     * Determine if a given string starts with a given substring.
+     *
+     * @param  string  $haystack
+     * @param  string|string[]  $needles
+     * @return bool
+     */
+    function str_startsWith($haystack, $needles)
+    {
+        foreach ((array) $needles as $needle) {
+            if ((string) $needle !== '' && strncmp($haystack, $needle, strlen($needle)) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+if (!function_exists('str_contains')) {
+        /**
+     * Determine if a given string contains a given substring.
+     *
+     * @param  string  $haystack
+     * @param  string|string[]  $needles
+     * @return bool
+     */
+    function str_contains($haystack, $needles)
+    {
+        foreach ((array) $needles as $needle) {
+            if ($needle !== '' && mb_strpos($haystack, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('str_studly')) {
+        /**
+     * Convert a value to studly caps case.
+     *
+     * @param  string  $value
+     * @return string
+     */
+    function str_studly($value)
+    {
+        $key = $value;
+
+        return ucwords(str_replace(['-', '_'], ' ', $value));
+    }
+}
+
+if (!function_exists('str_plural')) {
+    /**
+     * Get the plural form of an English word.
+     *
+     * @param  string  $value
+     * @param  int  $count
+     * @return string
+     */
+    function str_plural($value, $count = 2)
+    {
+        if($count === 1 || substr($value, -1) === 's')
+            return $value;
+        
+        return $value . 's';
+    }
+}
