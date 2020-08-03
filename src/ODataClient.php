@@ -7,8 +7,6 @@ use SaintSystems\OData\Exception\ODataException;
 use SaintSystems\OData\Query\Builder;
 use SaintSystems\OData\Query\Grammar;
 use SaintSystems\OData\Query\IGrammar;
-use SaintSystems\OData\Query\IProcessor;
-use SaintSystems\OData\Query\Processor;
 
 class ODataClient implements IODataClient
 {
@@ -38,13 +36,6 @@ class ODataClient implements IODataClient
     protected $queryGrammar;
 
     /**
-     * The query post processor implementation.
-     *
-     * @var IProcessor
-     */
-    protected $postProcessor;
-
-    /**
      * The return type for the entities
      *
      * @var string
@@ -66,12 +57,9 @@ class ODataClient implements IODataClient
         $this->authenticationProvider = $authenticationProvider;
         $this->httpProvider = $httpProvider ?: new GuzzleHttpProvider();
 
-        // We need to initialize a query grammar and the query post processors
-        // which are both very important parts of the OData abstractions
-        // so we initialize these to their default values while starting.
+        // We need to initialize a query grammar
+        // which is a very important parts of the OData abstractions
         $this->useDefaultQueryGrammar();
-
-        $this->useDefaultPostProcessor();
     }
 
     /**
@@ -92,26 +80,6 @@ class ODataClient implements IODataClient
     protected function getDefaultQueryGrammar()
     {
         return new Grammar;
-    }
-
-    /**
-     * Set the query post processor to the default implementation.
-     *
-     * @return void
-     */
-    public function useDefaultPostProcessor()
-    {
-        $this->postProcessor = $this->getDefaultPostProcessor();
-    }
-
-    /**
-     * Get the default post processor instance.
-     *
-     * @return IProcessor
-     */
-    protected function getDefaultPostProcessor()
-    {
-        return new Processor();
     }
 
     /**
@@ -194,7 +162,7 @@ class ODataClient implements IODataClient
     public function query()
     {
         return new Builder(
-            $this, $this->getQueryGrammar(), $this->getPostProcessor()
+            $this, $this->getQueryGrammar()
         );
     }
 
@@ -204,7 +172,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param array  $bindings
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function get($requestUri, $bindings = [])
     {
@@ -217,7 +185,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param mixed  $postData
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function post($requestUri, $postData)
     {
@@ -230,7 +198,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param mixed  $body
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function patch($requestUri, $body)
     {
@@ -242,7 +210,7 @@ class ODataClient implements IODataClient
      *
      * @param string $requestUri
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function delete($requestUri)
     {
@@ -256,7 +224,7 @@ class ODataClient implements IODataClient
      * @param string $requestUri
      * @param mixed  $body
      *
-     * @return mixed
+     * @return ODataResponse
      *
      * @throws ODataException
      */
@@ -267,13 +235,6 @@ class ODataClient implements IODataClient
         if ($body) {
             $request->attachBody($body);
         }
-
-        // TODO: find a better solution for this
-        /*
-        if ($method === 'PATCH' || $method === 'DELETE') {
-            $request->addHeaders(array('If-Match' => '*'));
-        }
-         */
 
         return $request->execute();
     }
@@ -298,28 +259,6 @@ class ODataClient implements IODataClient
     public function setQueryGrammar(IGrammar $grammar)
     {
         $this->queryGrammar = $grammar;
-    }
-
-    /**
-     * Get the query post processor used by the connection.
-     *
-     * @return IProcessor
-     */
-    public function getPostProcessor()
-    {
-        return $this->postProcessor;
-    }
-
-    /**
-     * Set the query post processor used by the connection.
-     *
-     * @param IProcessor $processor
-     *
-     * @return void
-     */
-    public function setPostProcessor(IProcessor $processor)
-    {
-        $this->postProcessor = $processor;
     }
 
     /**

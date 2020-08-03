@@ -176,8 +176,8 @@ class ODataResponse
     */
     public function getId()
     {
-        if (array_key_exists(Constants::ODATA_ID, $this->getHeaders())) {
-            $id = $this->getBody()[Constants::ODATA_ID];
+        if (array_key_exists(ResponseHeader::ODATA_ENTITY_ID, $this->getHeaders())) {
+            $id = $this->getHeaders()[ResponseHeader::ODATA_ENTITY_ID];
             return $id;
         }
         return null;

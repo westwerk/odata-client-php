@@ -3,11 +3,13 @@
 namespace SaintSystems\OData\Query;
 
 use Closure;
+use InvalidArgumentException;
 use SaintSystems\OData\Constants;
 use SaintSystems\OData\Exception\ODataQueryException;
 use SaintSystems\OData\IODataClient;
-use SaintSystems\OData\IODataRequest;
+use SaintSystems\OData\ODataResponse;
 use SaintSystems\OData\QueryOptions;
+use function array_flatten;
 
 class Builder
 {
@@ -54,6 +56,10 @@ class Builder
      */
     public $entityKey;
 
+    public $reference;
+    
+    public $referenceKey;
+    
     /**
      * The placeholder property for the ? operator in the OData querystring
      *
@@ -144,11 +150,6 @@ class Builder
     public $expands;
 
     /**
-     * @var IProcessor
-     */
-    private $processor;
-
-    /**
      * @var IGrammar
      */
     private $grammar;
@@ -158,16 +159,13 @@ class Builder
      *
      * @param IODataClient $client
      * @param IGrammar     $grammar
-     * @param IProcessor   $processor
      */
     public function __construct(
         IODataClient $client,
-        IGrammar $grammar = null,
-        IProcessor $processor = null
+        IGrammar $grammar = null
     ) {
         $this->client = $client;
         $this->grammar = $grammar ?: $client->getQueryGrammar();
-        $this->processor = $processor ?: $client->getPostProcessor();
     }
 
     /**
@@ -227,7 +225,7 @@ class Builder
 
         return $this;
     }
-
+    
     /**
      * Add an $expand clause to the query.
      *
@@ -240,40 +238,6 @@ class Builder
 
         return $this;
     }
-
-    /*
-     * TODO: do we still need this? lots of bugs in here!!!
-     *
-    public function expand($property, $first, $operator = null, $second = null, $type = 'inner', $ref = false, $count = false)
-    {
-        //TODO: need to flush out this method as it will work much like the where and join methods
-        $expand = new ExpandClause($this, $type, $property);
-
-        // If the first "column" of the join is really a Closure instance the developer
-        // is trying to build a join with a complex "on" clause containing more than
-        // one condition, so we'll add the join and call a Closure with the query.
-        if ($first instanceof Closure) {
-            call_user_func($first, $expand);
-
-            $this->expands[] = $expand;
-
-            $this->addBinding($expand->getBindings(), 'expand');
-        }
-
-        // If the column is simply a string, we can assume the join simply has a basic
-        // "expand" clause with a single condition. So we will just build the expand with
-        // this simple expand clauses attached to it. There is not an expand callback.
-        else {
-            $method = $where ? 'where' : 'on';
-
-            $this->expands[] = $expand->$method($first, $operator, $second);
-
-            $this->addBinding($expand->getBindings(), 'expand');
-        }
-
-        return $this;
-    }
-    */
 
     /**
      * Apply the callback's query changes if the given "value" is true.
@@ -494,14 +458,14 @@ class Builder
      *
      * @return array
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     protected function prepareValueAndOperator($value, $operator, $useDefault = false)
     {
         if ($useDefault) {
             return [$operator, '='];
         } elseif ($this->invalidOperatorAndValue($operator, $value)) {
-            throw new \InvalidArgumentException('Illegal operator and value combination.');
+            throw new InvalidArgumentException('Illegal operator and value combination.');
         }
 
         return [$value, $operator];
@@ -761,7 +725,7 @@ class Builder
      * @param array $properties
      * @param array $options
      *
-     * @return array
+     * @return ODataResponse
      */
     public function get($properties = [], $options = null)
     {
@@ -784,8 +748,6 @@ class Builder
             $this->properties = $properties;
         }
 
-        $results = $this->processor->processSelect($this, $this->runGet());
-
         $this->properties = $original;
 
         return $results;
@@ -798,7 +760,7 @@ class Builder
      * @param array $properties
      * @param array $options
      *
-     * @return array
+     * @return ODataResponse
      */
     public function post($body = [], $properties = [], $options = null)
     {
@@ -821,8 +783,6 @@ class Builder
             $this->properties = $properties;
         }
 
-        $results = $this->processor->processSelect($this, $this->runPost($body));
-
         $this->properties = $original;
 
         return $results;
@@ -835,7 +795,7 @@ class Builder
      */
     public function delete($options = null)
     {
-        $results = $this->processor->processSelect($this, $this->runDelete());
+        $results = $this->runDelete();
 
         return true;
     }
@@ -846,7 +806,7 @@ class Builder
      * @param array $properties
      * @param array $options
      *
-     * @return array
+     * @return ODataResponse
      */
     public function patch($body, $properties = [], $options = null)
     {
@@ -869,8 +829,6 @@ class Builder
             $this->properties = $properties;
         }
 
-        $results = $this->processor->processSelect($this, $this->runPatch($body));
-
         $this->properties = $original;
 
         return $results;
@@ -879,7 +837,7 @@ class Builder
     /**
      * Run the query as a "GET" request against the client.
      *
-     * @return IODataRequest
+     * @return ODataResponse
      */
     protected function runGet()
     {
@@ -891,7 +849,7 @@ class Builder
     /**
      * Run the query as a "GET" request against the client.
      *
-     * @return IODataRequest
+     * @return ODataResponse
      */
     protected function runPatch($body)
     {
@@ -903,7 +861,7 @@ class Builder
     /**
      * Run the query as a "GET" request against the client.
      *
-     * @return IODataRequest
+     * @return ODataResponse
      */
     protected function runPost($body)
     {
@@ -915,7 +873,7 @@ class Builder
     /**
      * Run the query as a "GET" request against the client.
      *
-     * @return IODataRequest
+     * @return ODataResponse
      */
     protected function runDelete()
     {
@@ -936,7 +894,7 @@ class Builder
 
         if (! $results->isEmpty()) {
             // replace all none numeric characters before casting it as int
-            return (int) preg_replace('/[^0-9,.]/', '', $results[0]);
+            return (int) preg_replace('/[^0-9,.]/', '', $results->getRawBody());
         }
     }
 
@@ -945,7 +903,7 @@ class Builder
      *
      * @param array $values
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function insert(array $values)
     {
@@ -1001,7 +959,7 @@ class Builder
      */
     public function newQuery()
     {
-        return new static($this->client, $this->grammar, $this->processor);
+        return new static($this->client, $this->grammar);
     }
 
     /**
@@ -1036,12 +994,12 @@ class Builder
      *
      * @return $this
      *
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function addBinding($value, $type = 'where')
     {
         if (! array_key_exists($type, $this->bindings)) {
-            throw new \InvalidArgumentException("Invalid binding type: {$type}.");
+            throw new InvalidArgumentException("Invalid binding type: {$type}.");
         }
 
         if (is_array($value)) {

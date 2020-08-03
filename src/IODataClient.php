@@ -4,7 +4,6 @@ namespace SaintSystems\OData;
 
 use SaintSystems\OData\Query\Builder;
 use SaintSystems\OData\Query\IGrammar;
-use SaintSystems\OData\Query\IProcessor;
 
 interface IODataClient
 {
@@ -55,7 +54,7 @@ interface IODataClient
      * @param $requestUri
      * @param array $bindings
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function get($requestUri, $bindings = []);
 
@@ -63,7 +62,7 @@ interface IODataClient
      * @param string $requestUri
      * @param mixed  $postData
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function post($requestUri, $postData);
 
@@ -71,14 +70,14 @@ interface IODataClient
      * @param string $requestUri
      * @param mixed  $body
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function patch($requestUri, $body);
 
     /**
      * @param string $requestUri
      *
-     * @return mixed
+     * @return ODataResponse
      */
     public function delete($requestUri);
     /**
@@ -97,19 +96,4 @@ interface IODataClient
      */
     public function setQueryGrammar(IGrammar $grammar);
 
-    /**
-     * Get the query post processor used by the connection.
-     *
-     * @return IProcessor
-     */
-    public function getPostProcessor();
-
-    /**
-     * Set the query post processor used by the connection.
-     *
-     * @param IProcessor $processor
-     *
-     * @return void
-     */
-    public function setPostProcessor(IProcessor $processor);
 }

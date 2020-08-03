@@ -170,8 +170,7 @@ class ODataRequest implements IODataRequest
      *
      * @throws ODataException if response is invalid
      *
-     * @return mixed object or array of objects
-     *         of class $returnType
+     * @return ODataResponse
      */
     public function execute()
     {
@@ -208,15 +207,7 @@ class ODataRequest implements IODataRequest
             throw new ODataException(Constants::UNABLE_TO_PARSE_RESPONSE);
         }
 
-        // If no return type is specified, return DynamicsResponse
-        $returnObj = $response;
-
-        $returnType = is_null($this->returnType) ? Entity::class : $this->returnType;
-
-        if ($returnType) {
-            $returnObj = $response->getResponseAsObject($returnType);
-        }
-        return $returnObj;
+        return $response;
     }
 
     /**
@@ -231,7 +222,7 @@ class ODataRequest implements IODataRequest
             RequestHeader::CONTENT_TYPE => 'application/json',
             RequestHeader::ODATA_MAX_VERSION => Constants::MAX_ODATA_VERSION,
             RequestHeader::ODATA_VERSION => Constants::ODATA_VERSION,
-            RequestHeader::PREFER => Preference::RETURN_REPRESENTATION,
+//            RequestHeader::PREFER => Preference::RETURN_REPRESENTATION,
             RequestHeader::USER_AGENT => 'odata-sdk-php-' . Constants::SDK_VERSION,
             //RequestHeader::AUTHORIZATION => 'Bearer ' . $this->accessToken
         ];
