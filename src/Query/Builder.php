@@ -750,6 +750,8 @@ class Builder
 
         $this->properties = $original;
 
+        $results = $this->runGet($body);
+        
         return $results;
     }
 
@@ -785,6 +787,8 @@ class Builder
 
         $this->properties = $original;
 
+        $results = $this->runPost($body);
+        
         return $results;
     }
 
@@ -797,7 +801,7 @@ class Builder
     {
         $results = $this->runDelete();
 
-        return true;
+        return $results->getStatus() === 204;
     }
 
     /**
@@ -830,7 +834,9 @@ class Builder
         }
 
         $this->properties = $original;
-
+        
+        $results = $this->runPatch($body);
+        
         return $results;
     }
 
