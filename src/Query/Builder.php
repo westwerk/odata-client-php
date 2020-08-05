@@ -58,8 +58,6 @@ class Builder
 
     public $reference;
     
-    public $referenceKey;
-    
     /**
      * The placeholder property for the ? operator in the OData querystring
      *
@@ -224,6 +222,14 @@ class Builder
         $this->entityKey = $id;
 
         return $this;
+    }
+    
+    public function reference($property, $id = null)
+    {
+        $this->reference = [
+            'id' => $id,
+            'property' => $property
+        ];
     }
     
     /**

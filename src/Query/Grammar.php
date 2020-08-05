@@ -42,6 +42,7 @@ class Grammar implements IGrammar
     protected $selectComponents = [
         'entitySet',
         'entityKey',
+        'reference',
         'count',
         'queryString',
         'properties',
@@ -136,6 +137,25 @@ class Grammar implements IGrammar
         $entityKey = $this->wrapKey($entityKey);
 
         return "($entityKey)";
+    }
+
+    protected function compileReference(Builder $query, $reference)
+    {
+        if (is_null($reference)) {
+            return '';
+        }
+        
+        $property = $reference['property'];
+        $key = $reference['key'];
+        
+        $result = '/' . $property;
+        
+        if($key)
+            $result .= '(' . $this->wrapKey($referenceKey) . ')';
+        
+        $result .= '/$ref';
+        
+        return $result;
     }
 
     protected function compileQueryString(Builder $query, $queryString)
