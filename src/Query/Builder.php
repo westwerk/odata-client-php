@@ -224,12 +224,21 @@ class Builder
         return $this;
     }
     
-    public function reference($property, $id = null)
+    /**
+     * 
+     * @param string $property
+     * @param string $id
+     * 
+     * @return $this
+     */
+    public function selectReference($property, $id = null)
     {
         $this->reference = [
             'id' => $id,
             'property' => $property
         ];
+        
+        return $this;
     }
     
     /**
