@@ -58,6 +58,8 @@ class Builder
 
     public $reference;
     
+    public $singleProperty;
+    
     /**
      * The placeholder property for the ? operator in the OData querystring
      *
@@ -237,6 +239,19 @@ class Builder
             'id' => $id,
             'property' => $property
         ];
+        
+        return $this;
+    }
+    
+    /**
+     * 
+     * @param string $property
+     * 
+     * @return $this
+     */
+    public function selectSingleProperty($property)
+    {
+        $this->singleProperty = $property;
         
         return $this;
     }

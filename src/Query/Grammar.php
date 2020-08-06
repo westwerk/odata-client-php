@@ -44,6 +44,7 @@ class Grammar implements IGrammar
         'entityKey',
         'reference',
         'count',
+        'singleProperty',
         'queryString',
         'properties',
         'wheres',
@@ -156,6 +157,15 @@ class Grammar implements IGrammar
         $result .= '/$ref';
         
         return $result;
+    }
+
+    protected function compileSingleProperty(Builder $query, $property)
+    {
+        if (is_null($property)) {
+            return '';
+        }
+        
+        return "/$property";
     }
 
     protected function compileQueryString(Builder $query, $queryString)
