@@ -825,13 +825,11 @@ class Builder
     /**
      * Execute the query as a "DELETE" request.
      *
-     * @return boolean
+     * @return ODataResponse
      */
     public function delete($options = null)
     {
-        $results = $this->runDelete();
-
-        return $results->getStatus() === 204;
+        return $this->runDelete();
     }
 
     /**
